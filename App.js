@@ -13,7 +13,6 @@ import * as Location from 'expo-location';
 
 const API_KEY = "9727c2c6aae9af369bc61a39edbcdbac"
 
-
 export default function App() {
 
   // state pour stocker la localisation
@@ -38,7 +37,6 @@ export default function App() {
         .then(() => console.log("permission granted"))
         .then(()=> console.log(location))
         .catch(error => console.log(error));
-
   }, [])
 
   useEffect( ()=>{
@@ -59,6 +57,7 @@ export default function App() {
           await setCurrentWeather(data);
       }
 
+      // on récupère les prévisions météo sur une heure précise
       const getMorningForecast = async () => {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`);
         const data = await response.json();
@@ -71,6 +70,7 @@ export default function App() {
       getCity()
           .then(() => console.log(city))
           .catch(error => console.log(error));
+
       getCurrentWeather()
           .then(() => console.log(({currentWeather})))
           .catch(error => console.log(error));
@@ -78,7 +78,6 @@ export default function App() {
       getMorningForecast()
           .then(() => console.log(morningForecast))
           .catch(error => console.log(error));
-
     }
   }, [location])
 
@@ -86,9 +85,11 @@ export default function App() {
   return (
 <ImageBackground style={styles.backGroundImage} source={require('./assets/weather-app_wp.jpg')} resizeMode={"cover"}>
       <View style={styles.container}>
-
         <StatusBar style="auto" />
+
+
         <View style={styles.currentWeatherContainer}>
+
           <View style={styles.iconContainer}>
             <Image style={styles.icon} source={{uri :`http://openweathermap.org/img/wn/${currentWeather.weather && currentWeather.weather[0].icon}.png`}}/>
           </View>
@@ -99,23 +100,27 @@ export default function App() {
           </View>
         </View>
 
-        <FlatList
-            horizontal={true}
-            data={morningForecast}
-            keyExtractor={(item) => item.dt.toString()}
-            renderItem={({item}) => (
-                <View style={styles.forecastItem}>
-                  <Text>{new Date(item.dt_txt).toLocaleDateString('en-US', { weekday: 'short' })}</Text>
-                  <Image style={styles.foreCastIcon} source={{uri :`http://openweathermap.org/img/wn/${item.weather && item.weather[0].icon}.png`}}/>
-                  <Text>{(item.main.temp - 273.15).toFixed(1)}&deg;C</Text>
-                </View>
-            )}
-        />
+
+<View style={styles.forecastContainer}>
+  <Text style={styles.titleForeCastContainer}>5 Days Forecast</Text>
+  <FlatList
+      horizontal={true}
+      data={morningForecast}
+      keyExtractor={(item) => item.dt.toString()}
+      renderItem={({item}) => (
+          <View style={styles.forecastItem}>
+            <Text>{new Date(item.dt_txt).toLocaleDateString('en-US', { weekday: 'short' })}</Text>
+            <Image style={styles.foreCastIcon} source={{uri :`http://openweathermap.org/img/wn/${item.weather && item.weather[0].icon}.png`}}/>
+            <Text>{(item.main.temp - 273.15).toFixed(1)}&deg;C</Text>
+          </View>
+      )}
+  />
+</View>
+
 
       </View>
   </ImageBackground>
   );
-
 }
 
 const styles = StyleSheet.create({
@@ -148,22 +153,23 @@ const styles = StyleSheet.create({
     height:80,
     width:80
   },
-  morningForecastContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 20
+  forecastContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    height:'22%',
+    marginTop:'15%'
   },
   forecastItem: {
     alignItems: 'center',
     paddingHorizontal:20,
-    paddingTop:30,
-    marginTop:80,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-    height:'35%'
+    paddingTop:20
   },
   backGroundImage:{
     height:'100%',
     width:'100%'
+  },
+  titleForeCastContainer:{
+    paddingTop:20,
+    paddingHorizontal:20,
+    fontWeight:'bold'
   }
 });
