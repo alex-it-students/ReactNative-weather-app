@@ -3,7 +3,9 @@ import {
   StyleSheet,
   Text,
   View,
-    Image
+  Image,
+  FlatList,
+  ImageBackground
 } from 'react-native';
 import React, {useState, useEffect}
   from "react";
@@ -18,6 +20,7 @@ export default function App() {
   const [location, setLocation] = useState({latitude:'', longitude:''});
   const [city, setCity] = useState('');
   const [currentWeather, setCurrentWeather] = useState('');
+  const [morningForecast, setMorningForecast] = useState([]);
   useEffect(() => {
     // on demande les autorisations
     const getPermissions = async () => {
@@ -33,6 +36,7 @@ export default function App() {
     };
     getPermissions()
         .then(() => console.log("permission granted"))
+        .then(()=> console.log(location))
         .catch(error => console.log(error));
 
   }, [])
@@ -50,9 +54,20 @@ export default function App() {
       const getCurrentWeather = async () => {
         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`);
         const data = await response.json();
+        console.log(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`)
         data &&
           await setCurrentWeather(data);
       }
+
+      const getMorningForecast = async () => {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`);
+        const data = await response.json();
+        const filteredData = data.list.filter(item => item.dt_txt.includes('09:00:00'));
+        filteredData &&
+        await setMorningForecast(filteredData);
+      }
+
+
       getCity()
           .then(() => console.log(city))
           .catch(error => console.log(error));
@@ -60,12 +75,18 @@ export default function App() {
           .then(() => console.log(({currentWeather})))
           .catch(error => console.log(error));
 
+      getMorningForecast()
+          .then(() => console.log(morningForecast))
+          .catch(error => console.log(error));
+
     }
   }, [location])
 
 
   return (
+<ImageBackground style={styles.backGroundImage} source={require('./assets/weather-app_wp.jpg')} resizeMode={"cover"}>
       <View style={styles.container}>
+
         <StatusBar style="auto" />
         <View style={styles.currentWeatherContainer}>
           <View style={styles.iconContainer}>
@@ -73,22 +94,39 @@ export default function App() {
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.cityText}>{city}</Text>
+            <Text style={styles.tempText}>{currentWeather.weather[0] && currentWeather.weather[0].main}</Text>
             <Text style={styles.tempText}>{currentWeather.main && (currentWeather.main.temp - 273.15).toFixed(1)}&deg;C</Text>
           </View>
         </View>
+
+        <FlatList
+            horizontal={true}
+            data={morningForecast}
+            keyExtractor={(item) => item.dt.toString()}
+            renderItem={({item}) => (
+                <View style={styles.forecastItem}>
+                  <Text>{new Date(item.dt_txt).toLocaleDateString('en-US', { weekday: 'short' })}</Text>
+                  <Image style={styles.foreCastIcon} source={{uri :`http://openweathermap.org/img/wn/${item.weather && item.weather[0].icon}.png`}}/>
+                  <Text>{(item.main.temp - 273.15).toFixed(1)}&deg;C</Text>
+                </View>
+            )}
+        />
+
       </View>
+  </ImageBackground>
   );
+
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center'
+    alignItems: 'center',
+    height: '100%'
   },
   currentWeatherContainer:{
     flexDirection:'row',
-    paddingTop:'35%'
+    paddingTop:'40%'
   },
   iconContainer: {
 
@@ -101,10 +139,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cityText:{
-    fontSize:24,
-    paddingBottom:30
+    fontSize:24
   },
   tempText:{
-    fontSize:20,
+    fontSize:20
+  },
+  foreCastIcon:{
+    height:80,
+    width:80
+  },
+  morningForecastContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 20
+  },
+  forecastItem: {
+    alignItems: 'center',
+    paddingHorizontal:20,
+    paddingTop:30,
+    marginTop:80,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    height:'35%'
+  },
+  backGroundImage:{
+    height:'100%',
+    width:'100%'
   }
 });
