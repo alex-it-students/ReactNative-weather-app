@@ -5,27 +5,31 @@ import {
   View,
   Image,
   FlatList,
-  ImageBackground
+  ImageBackground,
+  Pressable
 } from 'react-native';
 import React, {useState, useEffect}
   from "react";
 import * as Location from 'expo-location';
+import CurrentWeather
+  from "./Components/CurrentWeather";
 
-const API_KEY = "9727c2c6aae9af369bc61a39edbcdbac"
+const API_KEY = "a1b37adc02b1b507b4f930f80d69524a"
 
 export default function App() {
 
   // state pour stocker la localisation
   const [location, setLocation] = useState({latitude:'', longitude:''});
-  const [city, setCity] = useState('');
-  const [currentWeather, setCurrentWeather] = useState('');
-  const [morningForecast, setMorningForecast] = useState([]);
+  const [currentWeather, setCurrentWeather] = useState({});
+  const [forecast, setForecast] = useState([]);
+  const [forecastTime, setForeCastTime] = useState({'Morning': '09:00:00','Noon': '12:00:00','Evening': '21:00:00'});
+
   useEffect(() => {
-    // on demande les autorisations
+    // on déclare la méthode pour récupérer les autorisations
     const getPermissions = async () => {
       let {status} = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('Permission denied');
+/*        console.log('Permission denied');*/
         return;
       }
 
@@ -33,51 +37,41 @@ export default function App() {
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation({latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude});
     };
+
+    //on appelle la méthode
     getPermissions()
         .then(() => console.log("permission granted"))
-        .then(()=> console.log(location))
+      .then(()=> console.log(location))
         .catch(error => console.log(error));
   }, [])
 
+
   useEffect( ()=>{
     if (location) {
-      //on récupère la ville
-      const getCity = async () => {
-        const response = await fetch(`http://api.openweathermap.org/geo/1.0/reverse?lat=${location.latitude}&lon=${location.longitude}&limit=5&&appid=${API_KEY}`);
-        const data = await response.json();
-        data && data[0] &&
-          await setCity(data[0].name);
-      }
+
       //on récupère la météo actuelle
       const getCurrentWeather = async () => {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=metric`);
         const data = await response.json();
-        console.log(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`)
+/*        console.log(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=metric`)*/
         data &&
-          await setCurrentWeather(data);
+        await setCurrentWeather(data);
       }
 
       // on récupère les prévisions météo sur une heure précise
-      const getMorningForecast = async () => {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`);
+      const getForecast = async () => {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=metric`);
         const data = await response.json();
-        const filteredData = data.list.filter(item => item.dt_txt.includes('09:00:00'));
+        const filteredData = data.list.filter(item => item.dt_txt.includes(forecastTime.Noon));
         filteredData &&
-        await setMorningForecast(filteredData);
+        console.log(filteredData)
+        await setForecast(filteredData);
       }
 
+      getCurrentWeather().then().catch();
 
-      getCity()
-          .then(() => console.log(city))
-          .catch(error => console.log(error));
+      getForecast(forecastTime.Morning).then(response => console.log(response)).catch(error=>console.log(error));
 
-      getCurrentWeather()
-          .then(() => console.log(({currentWeather})))
-          .catch(error => console.log(error));
-
-      getMorningForecast()
-          .then(() => console.log(morningForecast))
-          .catch(error => console.log(error));
     }
   }, [location])
 
@@ -86,32 +80,59 @@ export default function App() {
 <ImageBackground style={styles.backGroundImage} source={require('./assets/weather-app_wp.jpg')} resizeMode={"cover"}>
       <View style={styles.container}>
         <StatusBar style="auto" />
+        {currentWeather.main && currentWeather.weather[0] && (
+            <CurrentWeather
+                icon={{uri: `https://openweathermap.org/img/wn/${currentWeather.weather && currentWeather.weather[0].icon}@4x.png`}}
+                city={currentWeather.name}
+                weather={currentWeather.weather[0].main}
+                temperature={(currentWeather.main.temp).toFixed(1)}
+                styles={styles}
+            />
+        )}
 
-
-        <View style={styles.currentWeatherContainer}>
-
-          <View style={styles.iconContainer}>
-            <Image style={styles.icon} source={{uri :`http://openweathermap.org/img/wn/${currentWeather.weather && currentWeather.weather[0].icon}.png`}}/>
+        {/*<View
+            style={styles.currentWeatherContainer}>
+          <View
+              style={styles.iconContainer}>
+            <Image
+                style={styles.icon}
+                source={{uri: `https://openweathermap.org/img/wn/${currentWeather.weather && currentWeather.weather[0].icon}@4x.png`}}/>
           </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.cityText}>{city}</Text>
-            <Text style={styles.tempText}>{currentWeather.weather[0] && currentWeather.weather[0].main}</Text>
-            <Text style={styles.tempText}>{currentWeather.main && (currentWeather.main.temp - 273.15).toFixed(1)}&deg;C</Text>
+          <View
+              style={styles.textContainer}>
+            {currentWeather.main && (
+                <View>
+                  <Text
+                      style={styles.cityText}>{currentWeather.name}</Text>
+                  <Text
+                      style={styles.tempText}>{currentWeather.weather[0].main}</Text>
+                  <Text
+                      style={styles.tempText}>{(currentWeather.main.temp).toFixed(1)}&deg;C</Text>
+                </View>
+            )}
           </View>
-        </View>
-
+        </View>*/}
 
 <View style={styles.forecastContainer}>
-  <Text style={styles.titleForeCastContainer}>5 Days Forecast</Text>
+  <View style={{flexDirection:'row', paddingTop:30, paddingHorizontal:20, justifyContent:'space-between'}}>
+    <Text style={{fontWeight:'bold'}}>5 Days Forecast </Text>
+    <View style={{flexDirection:'row'}}>
+      <Pressable style={{paddingHorizontal:5}} ><Text>Morning</Text></Pressable>
+      <Pressable style={{paddingHorizontal:5}} ><Text>Noon</Text></Pressable>
+      <Pressable style={{paddingHorizontal:5}} ><Text>Evening</Text></Pressable>
+    </View>
+  </View>
+
   <FlatList
       horizontal={true}
-      data={morningForecast}
+      data={forecast}
       keyExtractor={(item) => item.dt.toString()}
       renderItem={({item}) => (
           <View style={styles.forecastItem}>
-            <Text>{new Date(item.dt_txt).toLocaleDateString('en-US', { weekday: 'short' })}</Text>
-            <Image style={styles.foreCastIcon} source={{uri :`http://openweathermap.org/img/wn/${item.weather && item.weather[0].icon}.png`}}/>
-            <Text>{(item.main.temp - 273.15).toFixed(1)}&deg;C</Text>
+            <Text>{new Date(item.dt_txt).toLocaleDateString('en-US', { weekday: 'short', day:'2-digit' })}</Text>
+            <Text>{new Date(item.dt_txt).getHours()}:00</Text>
+            <Image style={styles.foreCastIcon} source={{uri :`http://openweathermap.org/img/wn/${item.weather && item.weather[0].icon}@4x.png`}}/>
+            <Text>{(item.main.temp ).toFixed(1)}&deg;C</Text>
           </View>
       )}
   />
@@ -155,7 +176,7 @@ const styles = StyleSheet.create({
   },
   forecastContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    height:'22%',
+    height:'25%',
     marginTop:'15%'
   },
   forecastItem: {
