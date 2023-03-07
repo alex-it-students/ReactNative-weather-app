@@ -15,7 +15,6 @@ const CurrentWeather = (props) => {
         styles
     } = props;
 
-
     return (
         <View
             style={styles.currentWeatherContainer}>
