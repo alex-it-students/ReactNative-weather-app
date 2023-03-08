@@ -5,6 +5,8 @@ import {
     StyleSheet,
     View,
     ImageBackground,
+    Text,
+    TouchableOpacity
 } from 'react-native';
 import React, {
     useState,
@@ -26,13 +28,16 @@ export default function App() {
         latitude: '',
         longitude: ''
     });
+
     const [currentWeather, setCurrentWeather] = useState({});
-    const [forecast, setForecast] = useState([]);
-    const [forecastTime, setForeCastTime] = useState({
-        'Morning': '09:00:00',
-        'Noon': '12:00:00',
-        'Evening': '21:00:00'
-    });
+    const [morningForecast, setMorningForecast] = useState([]);
+    const [noonForecast, setNoonForecast] = useState([]);
+    const [eveningForecast, setEveningForecast] = useState([]);
+    const [forecastTime, setForecastTime] = useState("Morning");
+
+    const handleForecastToggle = (forecastTime) => {
+        setForecastTime(forecastTime);
+    };
 
     useEffect(() => {
         // on déclare la méthode pour récupérer les autorisations
@@ -54,7 +59,7 @@ export default function App() {
         //on appelle la méthode
         getPermissions()
             .then(() => console.log("permission granted"))
-            .then(location && (() => console.log(location)))
+            .then(location && ((location) => console.log(location)))
             .catch(error => console.log(error));
     }, [])
 
@@ -73,14 +78,17 @@ export default function App() {
             const getForecast = async () => {
                 const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=metric`);
                 const data = await response.json();
-                const filteredData = data.list && data.list.filter(item => item.dt_txt.includes(forecastTime.Noon));
-                filteredData &&
-                console.log(filteredData)
-                await setForecast(filteredData);
+                const morningData = data.list && data.list.filter(item => item.dt_txt.includes('09:00:00'));
+                const noonData = data.list && data.list.filter(item => item.dt_txt.includes('12:00:00'));
+                const eveningData = data.list && data.list.filter(item => item.dt_txt.includes('21:00:00'));
+                data &&
+                await setMorningForecast(morningData);
+                await setNoonForecast(noonData);
+                await setEveningForecast(eveningData);
             }
 
-            getCurrentWeather().then().catch();
-            getForecast().then().catch();
+            getCurrentWeather().then(() => console.log("current weather fetched")).catch((error) => console.log(error));
+            getForecast().then(() => console.log("forecast fetched")).catch((error) => console.log(error));
 
         }
     }, [location])
@@ -103,9 +111,57 @@ export default function App() {
                         styles={styles}
                     />
                 )}
-                <Forecast
-                    forecast={forecast}
-                    styles={styles}/>
+
+                <View
+                    style={{paddingTop: '15%'}}>
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            height: 30,
+                            backgroundColor: 'rgba(255, 255, 255, 0.55)',
+                            padding: 5,
+                            borderRadius: 10
+                        }}>
+                        <TouchableOpacity
+                            title="Morning"
+                            onPress={() => handleForecastToggle("Morning")}>
+                            <Text
+                                style={styles.menuContainer}>Morning</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            title="Noon"
+                            onPress={() => handleForecastToggle("Noon")}>
+                            <Text
+                                style={styles.menuContainer}>Noon</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            title="Evening"
+                            onPress={() => handleForecastToggle("Evening")}>
+                            <Text
+                                style={styles.menuContainer}>Evening</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                {forecastTime === "Morning" && (
+                    <Forecast
+                        forecast={morningForecast}
+                        styles={styles}
+                        title={forecastTime}/>
+                )}
+
+                {forecastTime === "Noon" && (
+                    <Forecast
+                        forecast={noonForecast}
+                        styles={styles}
+                        title={forecastTime}/>
+                )}
+                {forecastTime === "Evening" && (
+                    <Forecast
+                        forecast={eveningForecast}
+                        styles={styles}
+                        title={forecastTime}/>
+                )}
             </View>
         </ImageBackground>
     );
@@ -142,7 +198,7 @@ const styles = StyleSheet.create({
     forecastContainer: {
         backgroundColor: 'rgba(255, 255, 255, 0.55)',
         height: '25%',
-        marginTop: '20%'
+        marginTop: 15
     },
     forecastItem: {
         alignItems: 'center',
@@ -156,6 +212,10 @@ const styles = StyleSheet.create({
     titleForeCastContainer: {
         paddingTop: 20,
         paddingHorizontal: 20,
+        fontWeight: 'bold'
+    },
+    menuContainer: {
+        paddingHorizontal: 5,
         fontWeight: 'bold'
     }
 });

@@ -1,30 +1,13 @@
-import React
-    from "react";
-import {
-    FlatList,
-    Image,
-    Pressable,
-    Text,
-    View
-} from "react-native";
-
-
+import React from "react";
+import {FlatList, Image, Text, View} from "react-native";
 
 const Forecast = (props) => {
-    const {
-        forecast,
-        styles
-    } = props
+    const {forecast, styles,title} = props
 
     return (
         <View style={styles.forecastContainer}>
-            <View style={{flexDirection:'row', paddingTop:30, paddingHorizontal:20, justifyContent:'space-between'}}>
-                <Text style={{fontWeight:'bold'}}>5 Days Forecast </Text>
-                <View style={{flexDirection:'row'}}>
-                    <Pressable style={{paddingHorizontal:5}} ><Text>Morning</Text></Pressable>
-                    <Pressable style={{paddingHorizontal:5}} ><Text>Noon</Text></Pressable>
-                    <Pressable style={{paddingHorizontal:5}} ><Text>Evening</Text></Pressable>
-                </View>
+            <View style={{flexDirection:'row', paddingTop:20, paddingHorizontal:20, justifyContent:'space-between', alignSelf:'center'}}>
+                <Text style={{fontWeight:'bold'}}>5 Days Forecast ({title})</Text>
             </View>
 
             <FlatList
