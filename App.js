@@ -127,19 +127,19 @@ export default function App() {
                             title="Morning"
                             onPress={() => handleForecastToggle("Morning")}>
                             <Text
-                                style={styles.menuContainer}>Morning</Text>
+                                style={[styles.menuContainer, forecastTime === 'Morning' ? styles.selectedMenu : null] }>Morning</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             title="Noon"
                             onPress={() => handleForecastToggle("Noon")}>
                             <Text
-                                style={styles.menuContainer}>Noon</Text>
+                                style={[styles.menuContainer, forecastTime === 'Noon' ? styles.selectedMenu : null]}>Noon</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             title="Evening"
                             onPress={() => handleForecastToggle("Evening")}>
                             <Text
-                                style={styles.menuContainer}>Evening</Text>
+                                style={[styles.menuContainer, forecastTime === 'Evening' ? styles.selectedMenu : null]}>Evening</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -215,7 +215,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     menuContainer: {
-        paddingHorizontal: 5,
+        paddingHorizontal: 5
+    },
+    selectedMenu: {
+        backgroundColor: '#467eac',
+        color:'white',
+        padding:1,
+        borderRadius: 20,
         fontWeight: 'bold'
     }
 });
